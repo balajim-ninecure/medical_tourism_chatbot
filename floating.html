@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NineCure AI Chat</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,sans-serif;
+}
+
+/* Floating Button */
+
+#chatToggle{
+    position:fixed;
+    bottom:20px;
+    right:20px;
+    width:65px;
+    height:65px;
+    border:none;
+    border-radius:50%;
+    background:#00acc1;
+    color:white;
+    font-size:28px;
+    cursor:pointer;
+    box-shadow:0 5px 20px rgba(0,0,0,0.25);
+    z-index:9999;
+}
+
+/* Chat Window */
+#chatWindow{
+    position:fixed;
+    bottom:100px;
+    right:20px;
+    width:420px;
+    height:700px;
+    background:white;
+    border-radius:25px;
+    overflow:hidden;
+    box-shadow:0 10px 35px rgba(0,0,0,0.25);
+    display:none;
+    flex-direction:column;
+    z-index:9999;
+}
+
+/* Header */
+.chat-header{
+    background:#00acc1;
+    padding:18px;
+    color:white;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.header-left{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.bot-logo{
+    width:45px;
+    height:45px;
+    background:white;
+    border-radius:50%;
+}
+
+.close-btn{
+    font-size:28px;
+    cursor:pointer;
+}
+
+/* Chat Area */
+#chat-box{
+    flex:1;
+    padding:15px;
+    overflow-y:auto;
+    background:#f4fdff;
+}
+
+.welcome-card{
+    background:white;
+    padding:18px;
+    border-radius:15px;
+    border:1px solid #d9f3f7;
+    margin-bottom:15px;
+}
+
+.welcome-card h3{
+    color:#00acc1;
+    margin-bottom:10px;
+}
+
+.message{
+    display:flex;
+    margin-bottom:12px;
+}
+
+.user-message{
+    justify-content:flex-end;
+}
+
+.bot-message{
+    justify-content:flex-start;
+}
+
+.message-text{
+    max-width:80%;
+    padding:12px 16px;
+    border-radius:15px;
+    line-height:1.5;
+}
+
+.user-message .message-text{
+    background:#00acc1;
+    color:white;
+}
+
+.bot-message .message-text{
+    background:white;
+    border:1px solid #d9f3f7;
+}
+
+/* Suggestions */
+.suggestions{
+    padding:10px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+}
+
+.suggestions button{
+    background:white;
+    border:1px solid #d9f3f7;
+    padding:12px;
+    border-radius:12px;
+    cursor:pointer;
+    text-align:left;
+}
+
+.suggestions button:hover{
+    background:#eefcff;
+}
+
+/* Input */
+.input-area{
+    display:flex;
+    padding:15px;
+    border-top:1px solid #eee;
+    gap:10px;
+}
+
+.input-area input{
+    flex:1;
+    padding:12px;
+    border:1px solid #ddd;
+    border-radius:12px;
+    outline:none;
+}
+
+.input-area button{
+    background:#00acc1;
+    color:white;
+    border:none;
+    padding:12px 20px;
+    border-radius:12px;
+    cursor:pointer;
+}
+
+/* Loading */
+.loading{
+    width:22px;
+    height:22px;
+    border:3px solid #ccc;
+    border-top:3px solid #00acc1;
+    border-radius:50%;
+    animation:spin 1s linear infinite;
+}
+
+@keyframes spin{
+    100%{
+        transform:rotate(360deg);
+    }
+}
+
+/* Mobile */
+@media(max-width:500px){
+
+    #chatWindow{
+        width:95%;
+        height:85vh;
+        right:2.5%;
+    }
+}
+
+</style>
+</head>
+
+<body>
+
+<!-- Floating Button -->
+<button id="chatToggle">💬</button>
+
+<!-- Chat Window -->
+<div id="chatWindow">
+
+    <div class="chat-header">
+
+        <div class="header-left">
+            <div class="bot-logo"></div>
+
+            <div>
+                <h3>NineCure AI</h3>
+                <small>Medical Tourism Assistant</small>
+            </div>
+        </div>
+
+        <span class="close-btn" id="closeChat">&times;</span>
+
+    </div>
+
+    <div id="chat-box">
+
+        <div class="welcome-card">
+            <h3>Welcome to NineCure 👋</h3>
+            <p>
+                Ask about hospitals, treatments,
+                appointments, travel guidance and
+                medical tourism support.
+            </p>
+        </div>
+
+    </div>
+
+    <div class="suggestions">
+
+        <button onclick="setprompt('How to book treatment?')">
+            🏥 How to book treatment?
+        </button>
+
+        <button onclick="setprompt('Treatment Cost')">
+            💰 Treatment Cost
+        </button>
+
+        <button onclick="setprompt('Appointment Process')">
+            📅 Appointment Process
+        </button>
+
+        <button onclick="setprompt('Travel Guidance')">
+            ✈️ Travel Guidance
+        </button>
+
+        <button onclick="setprompt('Contact Support')">
+            📞 Contact Support
+        </button>
+
+    </div>
+
+    <div class="input-area">
+
+        <input
+            type="text"
+            id="message"
+            placeholder="Ask your medical query..."
+        >
+
+        <button onclick="sendMessage()">
+            Send
+        </button>
+
+    </div>
+
+</div>
+
+<script>
+
+// Open Chat
+document.getElementById("chatToggle")
+.addEventListener("click", () => {
+
+    document.getElementById("chatWindow")
+    .style.display = "flex";
+});
+
+// Close Chat
+document.getElementById("closeChat")
+.addEventListener("click", () => {
+
+    document.getElementById("chatWindow")
+    .style.display = "none";
+});
+
+function setprompt(text){
+    document.getElementById("message").value = text;
+    sendMessage();
+}
+
+async function sendMessage(){
+
+    let suggestions =
+        document.querySelector(".suggestions");
+
+    if(suggestions){
+        suggestions.style.display = "none";
+    }
+
+    let input =
+        document.getElementById("message");
+
+    let message = input.value.trim();
+
+    let chatBox =
+        document.getElementById("chat-box");
+
+    if(message === ""){
+        return;
+    }
+    
+    // User Message
+    chatBox.innerHTML += `
+        <div class="message user-message">
+            <div class="message-text">
+                ${message}
+            </div>
+        </div>
+    `;
+
+    input.value = "";
+
+    // Loading
+    chatBox.innerHTML += `
+        <div id="loading">
+            <div class="loading"></div>
+        </div>
+    `;
+
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    try{
+
+        const response = await fetch(
+            "http://127.0.0.1:8002/chat",
+            {
+                method:"POST",
+                headers:{
+                    "Content-Type":"application/json"
+                },
+                body:JSON.stringify({
+                    message:message
+                })
+            }
+        );
+
+        const data = await response.json();
+
+        document
+        .getElementById("loading")
+        .remove();
+
+        chatBox.innerHTML += `
+            <div class="message bot-message">
+                <div class="message-text">
+                    ${data.response}
+                </div>
+            </div>
+        `;
+
+    }catch(error){
+
+        document
+        .getElementById("loading")
+        .remove();
+
+        chatBox.innerHTML += `
+            <div class="message bot-message">
+                <div class="message-text">
+                    Unable to connect to NineCure AI.
+                </div>
+            </div>
+        `;
+    }
+
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+// Enter Key
+document
+.getElementById("message")
+.addEventListener("keypress", function(e){
+
+    if(e.key === "Enter"){
+        sendMessage();
+    }
+});
+
+</script>
+
+</body>
+</html>
